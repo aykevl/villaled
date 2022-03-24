@@ -50,9 +50,13 @@ int logValue(int value) {
   return result;
 }
 
+void initWiFi();
+
 void setup() {
   Serial.begin(115200);
   Serial.println("start");
+
+  initWiFi();
 
   FastLED.addLeds<WS2811, LED_PIN, BRG>(barleds, NUM_LEDS);
 

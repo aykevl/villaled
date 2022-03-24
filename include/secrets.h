@@ -1,0 +1,5 @@
+
+#define WIFI_SSID "CHANGE ME"
+#define WIFI_PASS "CHANGE ME"
+
+#define OTA_PASS "CHANGE ME"
