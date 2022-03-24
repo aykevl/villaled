@@ -14,12 +14,12 @@ static CRGBPalette16 palettes[numPalettes] = {
 };
 
 #define numParams 4
-static Parameter animationSpeed(3, 7);
-static Parameter animationSpread(6, 10);
+static Parameter animationSpeed(4, 12);
+static Parameter animationSpread(12, 20);
 static Parameter palette(0, numPalettes-1, true);
-static Parameter brightness(2, 4);
+static Parameter brightness(4, 5);
 
-static Parameter *parameters[numParams] = {&animationSpeed, &animationSpread, &palette, &brightness};
+static Parameter *parameters[numParams] = {&brightness, &animationSpeed, &animationSpread, &palette};
 static Parameter currentParameter(0, numParams-1, true);
 
 // There are 150 LEDs, but they are controlled in groups of 3 (WS2811).
@@ -35,6 +35,19 @@ static bool isPressed(int button, bool &wasPressed);
 // Called on rotary encoder pin changes.
 static void updateKnob() {
   knob.tick();
+}
+
+// Return approximately 2^(n/2).
+// See: https://go.dev/play/p/BJbi9Dbe0Xu
+int logValue(int value) {
+  if (value == 0) {
+    return 0;
+  }
+  int result = 1 << (value / 2);
+  if (value%2 != 0) {
+    result += (result*2 + 2) / 5;
+  }
+  return result;
 }
 
 void setup() {
@@ -79,11 +92,11 @@ void loop() {
   unsigned long diff = now - lastMicros;
   lastMicros = now;
   if (animationSpeed.value != 0) {
-    t += diff * (1 << (animationSpeed.value-1)) / 8192;
+    t += diff * logValue(animationSpeed.value) / 8192;
   }
 
   // Calculate spread value that's used in the noise function.
-  uint32_t spread = 2 << animationSpread.value;
+  uint32_t spread = 2 * logValue(animationSpread.value+1);
   if (animationSpread.value == 0) {
     spread = 0;
   }
@@ -95,7 +108,7 @@ void loop() {
     // Using Perlin noise instead, which can have rather visible artifacts.
     //uint16_t val = snoise16(t, i * spread) - 0x8000;
     uint16_t val = inoise16(t * 32, i * spread * 32) - 0x8000;
-    barleds[i] = ColorFromPalette(currentPalette, val >> 8, (1 << (brightness.value + 4)) - 1, LINEARBLEND);
+    barleds[i] = ColorFromPalette(currentPalette, val >> 8, 16 * logValue(brightness.value+1) - 1, LINEARBLEND);
   }
   FastLED.show();
   delay(10);
